@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Allenamento</title>
+<meta name="theme-color" content="#16191c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Allenamento">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap">
+<style>
+:root{--bg:#d9dcde;--card:#eef0f1;--ink:#16191c;--mut:#5b636b;--line:#c3c8cc;--red:#c8372d;--blue:#2a5fa8;--yellow:#e2b32a;--green:#2f8f55;--steel:#6b7580;--acc:var(--red)}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 Barlow,system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+main{max-width:640px;margin:0 auto;padding:calc(16px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right)) calc(120px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left))}
+h1,h2,h3,.big,.clock{font-family:'Barlow Condensed','Arial Narrow',sans-serif;letter-spacing:.01em}
+h1{font-size:30px;margin:0 0 2px;line-height:1.1}
+h2{font-size:28px;margin:0 0 4px}
+h3{font-size:20px;margin:0}
+.mut{color:var(--mut);margin:2px 0 8px;font-size:14px}
+.card{background:var(--card);border-radius:10px;padding:14px;margin:12px 0}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;min-height:44px;border:0;border-radius:8px;padding:0 14px;background:var(--ink);color:#fff;font-weight:600}
+button.ghost{background:transparent;color:var(--ink);border:2px solid var(--ink)}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+input,select{min-height:44px;width:100%;border:2px solid var(--line);border-radius:8px;padding:0 10px;background:#fff;font-size:16px}
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin:10px 0}
+.wd{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:66px;padding:4px 0;background:var(--card);color:var(--ink);border-top:7px solid var(--pc);border-radius:8px}
+.wd .d{font-weight:700;font-size:14px}
+.wd .s{font-size:12px;font-weight:500}
+.wd.today .d::after{content:' •'}
+.wd.on{background:var(--ink);color:#fff}
+#session{border-top:8px solid var(--acc)}
+.ex{padding:12px 0;border-bottom:1px solid var(--line)}
+.ex:last-child{border:0}
+.exh{display:flex;gap:10px;justify-content:space-between;align-items:flex-start}
+.exh>div:first-child{flex:1;min-width:0}
+.figs{display:flex;gap:4px;flex:none}
+figure{margin:0;text-align:center}
+figure svg{width:74px;height:74px;background:#fff;border-radius:8px;display:block}
+figcaption{font-size:11px;color:var(--mut)}
+.set{display:grid;grid-template-columns:24px 1fr 1fr 48px;gap:8px;align-items:center;margin-top:6px}
+.set b{color:var(--mut);text-align:center}
+.chk{width:48px;padding:0;background:transparent;border:2px solid var(--ink);color:transparent;font-size:22px}
+.chk.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.water .big{font-size:34px;line-height:1}
+.bar{height:10px;background:var(--line);border-radius:5px;overflow:hidden;margin:8px 0}
+.bar i{display:block;height:100%;background:var(--blue);width:0;transition:width .2s}
+.row{display:flex;gap:8px;margin:8px 0}
+.row>*{flex:1}
+details summary{cursor:pointer;font-weight:600;min-height:44px;display:flex;align-items:center}
+details p{margin:2px 0 8px}
+.clock{font-size:64px;text-align:center;margin:10px 0;font-variant-numeric:tabular-nums}
+ul{padding-left:18px;margin:6px 0}
+#tip{margin:6px 0 0}
+#rest{position:fixed;left:0;right:0;bottom:0;background:var(--ink);color:#fff;padding:10px 14px calc(10px + env(safe-area-inset-bottom));display:none;align-items:center;gap:10px;justify-content:center}
+#rest .big{font-size:36px;min-width:90px;text-align:center}
+#rest button{background:#fff;color:var(--ink)}
+.wu{margin:6px 0 4px;background:#fff;border-radius:8px;padding:0 10px}.wu ol{margin:2px 0 8px;padding-left:20px}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+</head>
+<body>
+<main>
+<h1>Allenamento</h1>
+<p class="mut" id="today"></p>
+
+<div class="card">
+  <label class="mut">Turno di questa settimana (la rotazione è automatica)
+    <select id="shift"></select>
+  </label>
+  <p id="tip"></p>
+</div>
+<div class="week" id="week" role="group" aria-label="Settimana"></div>
+
+<div class="card" id="session"></div>
+
+<div class="card water">
+  <div class="mut">Acqua oggi (obiettivo 2,5 L)</div>
+  <div class="big"><span id="wl">0</span> L</div>
+  <div class="bar"><i id="wb"></i></div>
+  <div class="row">
+    <button data-w="250">+250 ml</button>
+    <button data-w="1000">+1 borraccia</button>
+    <button class="ghost" data-w="-250" aria-label="Togli 250 ml">−250</button>
+  </div>
+</div>
+
+
+</main>
+
+<div id="rest" role="timer" aria-live="off">
+  <span>Recupero</span><span class="big" id="rt">0:00</span>
+  <button id="r30">+30 s</button><button id="rstop">Salta</button>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+const K='allenamento-v2';
+const t=new Date();
+const TK=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
+const DN=['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
+const DS=['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
+const TI=(t.getDay()+6)%7;
+let sel=TI;
+
+/* Turni: settimana del 21/09/2026 = Mattina, poi Notte, poi Pomeriggio */
+const SH=['Mattina','Notte','Pomeriggio'];
+const W=Math.floor((Date.UTC(t.getFullYear(),t.getMonth(),t.getDate())-Date.UTC(2026,8,21))/604800000);
+const AUTO=SH[((W%3)+3)%3];
+const TIPS={
+ Mattina:`Turno 6-14. Acquafitness martedì e giovedì alle 19:00. Corsa e total body nel tardo pomeriggio (16:30-18:00). La corsa di sabato è facoltativa. Orari indicativi.`,
+ Pomeriggio:`Turno 14-22. Acquafitness alle 9:00, due giorni tra lun, mer e ven. Corsa e total body la mattina dopo colazione (9:30-11:00). La corsa di sabato è facoltativa. Orari indicativi.`,
+ Notte:`Turno 22-6, settimana più leggera. Acquafitness martedì e giovedì alle 19:00, prima del turno. Corsa e total body appena sveglio (17:00-18:30). Se sei scarico: 1 corsa e 2 total body, il resto salta. Mai dopo il turno: dormi.`
+};
+const PLAN={
+ Mattina:['tbA','aqua','run','aqua','tbB','run2','rest'],
+ Pomeriggio:['aqua','tbA','aqua','run','tbB','run2','rest'],
+ Notte:['tbA','aqua','run','aqua','tbB','rest','rest']
+};
+
+/* Disegni: H,S,P,K,A,E,W (testa, spalla, anca, ginocchio, caviglia, gomito, polso) + linee extra */
+const ST='50,12,50,24,50,50,50,70,50,90,51,40,52,56';
+const FIG={
+ squat:['50,12,50,24,50,50,50,70,50,90,44,32,44,25','52,32,48,44,34,66,62,70,50,90,42,50,46,44'],
+ hinge:[ST,'72,44,62,46,34,52,38,72,42,90,63,58,63,72'],
+ dead:['68,44,58,50,38,62,56,72,46,90,59,64,59,84',ST],
+ press:['18,52,28,56,58,58,76,66,70,90,28,44,28,32','18,52,28,56,58,58,76,66,70,90,36,62,28,48',[[10,64,68,64]]],
+ ohp:['50,12,50,24,50,50,50,70,50,90,43,36,46,24','56,16,50,26,50,52,50,72,50,90,47,14,48,2'],
+ row:['70,32,60,40,38,54,42,72,44,90,60,54,60,68','70,32,60,40,38,54,42,72,44,90,46,46,56,52'],
+ pull:['40,30,40,42,40,70,64,66,64,90,44,26,48,10','40,30,40,42,40,70,64,66,64,90,34,54,46,38',[[28,73,52,73]]],
+ curl:['50,12,50,24,50,50,50,70,50,90,51,42,53,58','50,12,50,24,50,50,50,70,50,90,51,42,60,30'],
+ raise:['50,12,50,24,50,50,50,70,50,90,50,40,50,56','50,12,50,24,50,50,50,70,50,90,60,32,72,30'],
+ lunge:['52,12,52,24,52,50,56,72,60,90,52,38,52,54','52,20,52,32,50,66,68,68,64,90,52,46,52,62',[[6,74,26,74]]],
+ plank:['80,56,70,62,42,70,28,76,14,86,70,84,82,84',null],
+ calf:[ST,'50,6,50,18,50,44,50,64,52,84,51,34,52,50'],
+ thrust:['20,58,30,62,48,76,66,62,70,90,40,72,50,74','20,58,30,62,48,58,66,60,70,90,40,64,50,58',[[8,68,34,68]]],
+ pdown:['50,12,50,24,50,50,50,70,50,90,52,38,58,28','50,12,50,24,50,50,50,70,50,90,52,38,54,54'],
+ fpull:['50,12,50,24,50,50,50,70,50,90,64,26,78,24','50,12,50,24,50,50,50,70,50,90,58,24,60,14'],
+ crunch:['16,84,26,86,52,86,66,68,72,88,32,80,40,76','32,68,36,76,52,86,66,68,72,88,42,74,50,68']
+};
+function fig(pat,ps,lab){
+  const [hx,hy,sx,sy,px,py,kx,ky,ax,ay,ex,ey,wx,wy]=ps.split(',').map(Number);
+  const L=(a,b,c,d)=>`<line x1="${a}" y1="${b}" x2="${c}" y2="${d}"/>`;
+  const xt=(FIG[pat][2]||[]).map(l=>L(...l)).join('');
+  return `<figure><svg viewBox="0 0 100 100" role="img" aria-label="${lab}"><g stroke="#8a929a" stroke-width="2" stroke-linecap="round"><line x1="4" y1="92" x2="96" y2="92"/>${xt}</g><g stroke="#16191c" stroke-width="3.5" stroke-linecap="round" fill="none">${L(sx,sy,px,py)}${L(px,py,kx,ky)}${L(kx,ky,ax,ay)}${L(sx,sy,ex,ey)}${L(ex,ey,wx,wy)}${L(hx,hy,sx,sy)}<circle cx="${hx}" cy="${hy}" r="6" fill="#fff"/></g><circle cx="${wx}" cy="${wy}" r="4.5" fill="var(--acc)"/></svg><figcaption>${lab}</figcaption></figure>`;
+}
+
+/* Esercizi: nome, serie, ripetizioni, recupero (s), disegno, esecuzione */
+const PR='+1 ripetizione a settimana fino al massimo del range, poi aumenta il carico e riparti dal fondo.';
+const D=[
+ {id:'push',n:'Push',l:'Push',col:'red',ex:[
+  ['Panca piana',4,'10-12',120,'press','Scapole indietro, piedi a terra. Scendi al petto e spingi.','parti da 20 kg. Discesa 3 s, pausa 1 s sul petto, 1-2 ripetizioni in riserva.'],
+  ['Panca inclinata manubri',3,'8-10',90,'press','Panca a 30°. Manubri ai lati del petto, spingi senza sbatterli.','manubri che hai ora. Discesa 3 s, 1-2 ripetizioni in riserva.'],
+  ['Military press manubri',3,'8-10',90,'ohp','Glutei e addome contratti, non inarcare la schiena.','manubri che hai ora. Discesa lenta, 1-2 ripetizioni in riserva.'],
+  ['Alzate laterali',3,'10-15',60,'raise','Il disegno mostra la salita: le braccia vanno di lato, gomiti leggermente piegati, fino alle spalle.','parti da 2,5 kg. Sali in 1 s, scendi in 3 s.','+1 ripetizione a settimana fino a 15 su tutte le serie, poi passa al peso successivo.'],
+  ['Push-down con banda',3,'10-12',60,'pdown','Gomiti fermi ai fianchi, estendi del tutto le braccia.','banda che hai. Estendi del tutto, ritorno in 3 s.'],
+  ['Plank',3,'45 s',60,'plank','Corpo in linea da testa a talloni, addome e glutei contratti.','corpo rigido, respira. Se diventa facile, appoggia i piedi sulla panca.','+5 secondi a settimana fino a 60-90 s.']]},
+ {id:'pull',n:'Pull',l:'Pull',col:'blue',ex:[
+  ['Lat machine',4,'10-12',120,'pull','Tira la barra al petto, gomiti in basso, petto in fuori.','parti da 20 kg. Tira in 1 s, ritorno in 3 s, 1-2 ripetizioni in riserva.'],
+  ['Rematore bilanciere',4,'8',120,'row','Schiena piatta, busto a 45°, porta la barra all\'addome.','parti da 20 kg. Tira in 1 s, ritorno in 2-3 s.'],
+  ['Rematore manubrio',3,'10',90,'row','Mano e ginocchio sulla panca, tira il manubrio verso l\'anca.','manubrio che hai ora. Tira in 1 s, ritorno in 3 s.'],
+  ['Face pull con banda',3,'12-15',60,'fpull','Banda all\'altezza del viso, tira verso la fronte aprendo i gomiti.','banda leggera. Pausa 1 s a fine trazione.'],
+  ['Curl bilanciere',3,'10',60,'curl','Gomiti fermi, niente slancio con la schiena.','parti da 20 kg. Discesa 3 s, niente slancio.'],
+  ['Curl a martello',2,'12',60,'curl','Palmi uno verso l\'altro, sali senza muovere i gomiti.','manubri che hai ora. Discesa 3 s.']]},
+ {id:'lower',n:'Lower',l:'Lower',col:'yellow',ex:[
+  ['Squat',4,'12-15',120,'squat','Piedi larghi come le spalle, scendi sotto il parallelo con schiena neutra, spingi sui talloni.','parti da 20 kg. Discesa 3 s, pausa 1 s in basso, 1-2 ripetizioni in riserva.'],
+  ['Stacco rumeno (RDL)',3,'12-15',120,'hinge','Fianchi indietro, ginocchia poco piegate, barra vicina alle gambe.','parti da 20 kg. Discesa 3 s. Per renderlo più duro prova a una gamba.'],
+  ['Affondi bulgari',3,'8 per lato',90,'lunge','Piede dietro sulla panca, scendi dritto, spingi sul tallone davanti.','manubri che hai ora. Discesa 3 s, già impegnativo a una gamba.'],
+  ['Hip thrust su panca',3,'10',90,'thrust','Schiena alta sulla panca, spingi i fianchi e contrai i glutei in alto.','parti da 20 kg sul bacino (o un manubrio). Pausa 1 s in alto.'],
+  ['Calf raises',4,'12',60,'calf','Sali sulle punte, pausa in alto, scendi lento.','manubri che hai ora. Pausa 1 s in alto, discesa 3 s.'],
+  ['Crunch con banda',3,'12-15',60,'crunch','Solleva le spalle senza tirare il collo, espira in alto.','banda che hai. Espira in alto, discesa lenta.']]},
+ {id:'fullA',n:'Full Body A',l:'Full A',col:'green',ex:[
+  ['Squat',4,'12-15',120,'squat','Piedi larghi come le spalle, scendi sotto il parallelo con schiena neutra.','parti da 20 kg. Discesa 3 s, pausa 1 s in basso, 1-2 ripetizioni in riserva.'],
+  ['Panca piana',4,'10-12',120,'press','Scapole indietro, piedi a terra. Scendi al petto e spingi.','parti da 20 kg. Discesa 3 s, pausa 1 s sul petto, 1-2 ripetizioni in riserva.'],
+  ['Stacco rumeno (RDL)',3,'12-15',90,'hinge','Fianchi indietro, ginocchia poco piegate, barra vicina alle gambe.','parti da 20 kg. Discesa 3 s. Per renderlo più duro prova a una gamba.'],
+  ['Lat machine',3,'10-12',90,'pull','Tira la barra al petto, gomiti in basso.','parti da 20 kg. Tira in 1 s, ritorno in 3 s, 1-2 ripetizioni in riserva.'],
+  ['Alzate laterali',3,'10-15',90,'raise','Le braccia vanno di lato, gomiti leggermente piegati, fino alle spalle.','parti da 2,5 kg. Sali in 1 s, scendi in 3 s.','+1 ripetizione a settimana fino a 15 su tutte le serie, poi passa al peso successivo.'],
+  ['Plank',3,'45-60 s',60,'plank','Corpo in linea da testa a talloni.','corpo rigido, respira. Se diventa facile, appoggia i piedi sulla panca.','+5 secondi a settimana fino a 60-90 s.']]},
+ {id:'fullB',n:'Full Body B',l:'Full B',col:'green',ex:[
+  ['Stacco da terra',4,'8-12',120,'dead','Barra sopra il centro del piede, schiena piatta, spingi il pavimento e chiudi i fianchi.','parti da 20 kg. Schiena piatta, ritorno controllato 2-3 s.'],
+  ['Military press',4,'8-12',120,'ohp','Glutei e addome contratti, barra dritta sopra la testa.','parti da 20 kg. Discesa 2-3 s, 1-2 ripetizioni in riserva.'],
+  ['Rematore bilanciere',3,'10',90,'row','Schiena piatta, busto a 45°, porta la barra all\'addome.','parti da 20 kg. Tira in 1 s, ritorno in 2-3 s.'],
+  ['Affondi bulgari',3,'8 per lato',90,'lunge','Piede dietro sulla panca, scendi dritto.','manubri che hai ora. Discesa 3 s, già impegnativo a una gamba.'],
+  ['Calf raises',3,'8-10',90,'calf','Sali sulle punte, pausa in alto, scendi lento.','manubri che hai ora. Pausa 1 s in alto, discesa 3 s.'],
+  ['Curl + push-down (superset)',3,'10+10',90,'curl','Prima il curl, poi subito il push-down, senza pausa.','carichi leggeri. Curl e poi push-down senza pausa.']]},
+ {id:'tbA',n:'Total body A',l:'Total A',col:'green',ex:[
+  ['Squat',3,'12-15',90,'squat','Piedi larghi come le spalle, scendi sotto il parallelo con schiena neutra, spingi sui talloni.','parti da 20 kg. Discesa 3 s, pausa 1 s in basso, 1-2 ripetizioni in riserva.'],
+  ['Panca piana',3,'10-12',90,'press','Scapole indietro, piedi a terra. Scendi al petto e spingi.','parti da 20 kg. Discesa 3 s, pausa 1 s sul petto, 1-2 ripetizioni in riserva.'],
+  ['Rematore bilanciere',3,'10-12',90,'row','Schiena piatta, busto a 45°, porta la barra all\'addome.','parti da 20 kg. Tira in 1 s, ritorno in 2-3 s.'],
+  ['Stacco rumeno (RDL)',3,'12-15',90,'hinge','Fianchi indietro, ginocchia poco piegate, barra vicina alle gambe.','parti da 20 kg. Discesa 3 s. Più duro: a una gamba.'],
+  ['Plank',3,'45 s',60,'plank','Corpo in linea da testa a talloni, addome e glutei contratti.','corpo rigido, respira.','+5 secondi a settimana fino a 60-90 s.']]},
+ {id:'tbB',n:'Total body B',l:'Total B',col:'green',ex:[
+  ['Stacco da terra',3,'8-10',120,'dead','Barra sopra il centro del piede, schiena piatta, spingi il pavimento e chiudi i fianchi.','parti da 20 kg. Schiena piatta, ritorno controllato 2-3 s.'],
+  ['Military press',3,'8-12',90,'ohp','Glutei e addome contratti, barra dritta sopra la testa.','parti da 20 kg. Discesa 2-3 s, 1-2 ripetizioni in riserva.'],
+  ['Lat machine',3,'10-12',90,'pull','Tira la barra al petto, gomiti in basso, petto in fuori.','parti da 20 kg. Tira in 1 s, ritorno in 3 s.'],
+  ['Affondi bulgari',3,'8 per lato',90,'lunge','Piede dietro sulla panca, scendi dritto, spingi sul tallone davanti.','manubri che hai ora. Discesa 3 s.'],
+  ['Calf raises',3,'12',60,'calf','Sali sulle punte, pausa in alto, scendi lento.','manubri che hai ora. Pausa 1 s in alto.']]},
+ {id:'aqua',n:'Acquafitness',l:'Acqua',col:'blue'},
+ {id:'run',n:'Corsa Zone 2',l:'Corsa',col:'steel'},
+ {id:'run2',n:'Corsa facile (facoltativa)',l:'Corsa+',col:'steel'},
+ {id:'rest',n:'Riposo',l:'Riposo',col:'line'}
+];
+let S={plan:JSON.parse(JSON.stringify(PLAN)),ov:{},age:27,water:{},sess:{},last:{},runs:[]};
+try{const r=JSON.parse(localStorage.getItem(K));if(r)S=Object.assign(S,r)}catch(e){}
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}};
+if(S.pv!==3){S.plan=JSON.parse(JSON.stringify(PLAN));S.pv=3;save()}
+const fmt=s=>{s=Math.max(0,Math.round(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),c=s%60;return (h?h+':'+String(m).padStart(2,'0'):m)+':'+String(c).padStart(2,'0')};
+const shift=()=>S.ov[W]||AUTO;
+const sid=()=>S.plan[shift()][sel];
+const day=()=>D.find(x=>x.id===sid());
+const cur=()=>S.sess[TK+'|'+sid()];
+
+$('#today').textContent='Oggi è '+t.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'});
+
+function renderWater(){
+  const ml=Math.max(0,S.water[TK]||0);
+  $('#wl').textContent=(ml/1000).toFixed(2).replace('.',',');
+  $('#wb').style.width=Math.min(100,ml/25)+'%';
+}
+document.querySelectorAll('[data-w]').forEach(b=>b.onclick=()=>{S.water[TK]=Math.max(0,(S.water[TK]||0)+Number(b.dataset.w));save();renderWater()});
+
+function renderShift(){
+  $('#shift').innerHTML=SH.map(s=>`<option value="${s}" ${s===shift()?'selected':''}>${s}${s===AUTO?' (previsto)':''}</option>`).join('');
+  $('#tip').textContent=TIPS[shift()];
+}
+$('#shift').onchange=e=>{S.ov[W]=e.target.value;save();renderAll()};
+
+function renderWeek(){
+  $('#week').innerHTML=S.plan[shift()].map((id,i)=>{const d=D.find(x=>x.id===id);return `<button class="wd ${i===sel?'on':''} ${i===TI?'today':''}" style="--pc:var(--${d.col})" data-i="${i}" aria-pressed="${i===sel}" aria-label="${DN[i]}: ${d.n}"><span class="d">${DS[i]}</span><span class="s">${d.l}</span></button>`}).join('');
+}
+$('#week').onclick=e=>{const b=e.target.closest('.wd');if(!b)return;sel=Number(b.dataset.i);renderAll()};
+
+function head(d){
+  return `<h2>${DN[sel]}: ${d.n}</h2>`+(sel!==TI?`<p class="mut">Anteprima. Oggi è ${DN[TI]}.</p>`:'')+
+  `<label class="mut">Cambia la sessione di ${DN[sel]}<select id="chg">${D.map(x=>`<option value="${x.id}" ${x.id===d.id?'selected':''}>${x.n}</option>`).join('')}</select></label>`;
+}
+function renderSession(){
+  const d=day(),el=$('#session');
+  document.documentElement.style.setProperty('--acc',`var(--${d.col})`);
+  if(d.id==='rest'){
+    el.innerHTML=head(d)+`<p>Niente pesi né corsa. Obiettivi del giorno:</p><ul><li>10.000 passi</li><li>30 minuti di sole</li><li>Stretching o respiro profondo</li><li>Acqua fino a 2-2,5 L</li><li>7-8 ore di sonno</li></ul>`;return;
+  }
+  if(d.id==='aqua'){el.innerHTML=head(d)+aquaHTML()+snackHTML('aqua');bindAqua();return}
+  if(d.id.startsWith('run')){el.innerHTML=head(d)+wuHTML(WUC)+runHTML()+snackHTML('run');bindRun();return}
+  const k=TK+'|'+d.id;
+  if(!S.sess[k])S.sess[k]=d.ex.map(e=>Array.from({length:e[1]},()=>({kg:'',reps:'',done:false})));
+  el.innerHTML=head(d)+wuHTML(WUP)+d.ex.map((e,i)=>{
+    const f=FIG[e[4]];
+    return `<section class="ex"><div class="exh"><div><h3>${e[0]}</h3><p class="mut">${e[1]} serie × ${e[2]} · recupero ${fmt(e[3])}</p><p class="mut">${e[5]}</p><p class="mut"><b>Carico:</b> ${e[6]}</p><p class="mut"><b>Progressione:</b> ${e[7]||PR}</p></div><div class="figs">${fig(e[4],f[0],'Inizio')}${f[1]?fig(e[4],f[1],'Fine'):''}</div></div>`+
+    S.sess[k][i].map((s,j)=>{
+      const ph=(S.last[d.id+'|'+i]||[])[j]||'kg';
+      return `<div class="set"><b>${j+1}</b><input inputmode="decimal" placeholder="${ph}" value="${s.kg}" data-e="${i}" data-s="${j}" data-f="kg" aria-label="Peso serie ${j+1}"><input inputmode="numeric" placeholder="rip" value="${s.reps}" data-e="${i}" data-s="${j}" data-f="reps" aria-label="Ripetizioni serie ${j+1}"><button class="chk ${s.done?'on':''}" data-e="${i}" data-s="${j}" aria-pressed="${s.done}" aria-label="Serie ${j+1} fatta">✓</button></div>`}).join('')+`</section>`}).join('')+snackHTML(d.id);
+}
+$('#session').addEventListener('change',e=>{if(e.target.id==='chg'){S.plan[shift()][sel]=e.target.value;save();renderAll()}});
+$('#session').addEventListener('input',e=>{const x=e.target;if(x.dataset.f&&cur()){cur()[x.dataset.e][x.dataset.s][x.dataset.f]=x.value;save()}});
+$('#session').addEventListener('click',e=>{
+  const b=e.target.closest('.chk');if(!b)return;
+  const {e:i,s:j}=b.dataset,set=cur()[i][j],d=day();
+  set.done=!set.done;b.classList.toggle('on',set.done);b.setAttribute('aria-pressed',set.done);
+  if(set.done){if(set.kg!=='')(S.last[d.id+'|'+i]=S.last[d.id+'|'+i]||[])[j]=set.kg;startRest(d.ex[i][3])}
+  save();
+});
+
+/* Riscaldamento, spuntini, acquafitness */
+const WUP={t:`8-10 min`,s:[`3-5 min di cardio leggero (camminata veloce, corda o bici) finché senti caldo`,`Cerchi con le braccia 10+10, cat-cow x8, squat a corpo libero x10, good morning a corpo libero x10`,`Face pull o pull-apart con banda x15, ponte per i glutei x10-15`,`Serie di avvicinamento sul primo esercizio: circa 50% x8, 70% x5, 85% x3, poi le serie di lavoro`]};
+const WUC={t:`5-8 min`,s:[`3-5 min di camminata veloce, poi 1 min di corsa molto lenta`,`Cerchi con le caviglie x10 per lato, slanci della gamba avanti e indietro x10 per lato`,`Affondi in camminata x8 per lato, marcia alta o skip: 2 passaggi da 20 m`,`I primi 5-10 minuti di corsa più lenti della tua Zone 2, poi sali al ritmo di lavoro`]};
+function wuHTML(w){return `<details class="wu"><summary>Riscaldamento (${w.t})</summary><ol>${w.s.map(x=>`<li>${x}</li>`).join('')}</ol></details>`}
+function snackHTML(id){
+  const sh=shift();
+  const pre=id==='aqua'?`60-90 min prima: 1 banana o 1 yogurt piccolo. Niente pasti pesanti o frutta secca vicino alla lezione.`:`mancano 90-120 min: yogurt greco o Skyr 170 g + 1 banana. Mancano 30-60 min: 1 banana, con 15-20 g di proteine se serve. Vicino all allenamento evita frutta secca e formaggi.`;
+  const post=sh==='Mattina'?`cena entro 60-90 min, senza spuntino. Se tardi: shaker 25-30 g + 1 frutto.`:`se mangi entro 60-90 min vai direttamente a tavola. Altrimenti shaker 25-30 g + 1 frutto, facile da portare al lavoro.`;
+  return `<div style="margin-top:12px;padding-top:8px;border-top:1px solid var(--line)"><h3>Spuntini</h3><p class="mut"><b>Prima</b>: ${pre}</p><p class="mut"><b>Dopo</b>: ${post}</p></div>`;
+}
+function aquaHTML(){
+  S.aq=S.aq||{};
+  const when=shift()==='Pomeriggio'?`09:00 (lun, mer o ven)`:`19:00 (mar o gio)`;
+  const n=Object.keys(S.aq).filter(k=>S.aq[k]).length,done=S.aq[TK];
+  return `<p class="mut">Lezione di 50 minuti alle ${when}, piscina di Pizzo, max 8 partecipanti. Lavora a intensità moderata: devi riuscire a parlare, ma sentire la fatica.</p>
+  <ul><li>Porta: costume, asciugamano, badge, calzari (obbligatori)</li><li>Armadietto gratuito con chiave in dotazione</li></ul>
+  <p><b>Lezioni fatte: ${n}/24</b></p>`+(sel===TI?`<button id="aqd">${done?'Annulla lezione di oggi':'Segna lezione di oggi'}</button>`:`<p class="mut">Il contatore si aggiorna il giorno della lezione.</p>`);
+}
+function bindAqua(){const b=$('#aqd');if(b)b.onclick=()=>{S.aq[TK]=!S.aq[TK];save();renderSession()}}
+
+/* Corsa */
+let sw={on:false,acc:0,t0:0};
+const swTime=()=>sw.acc+(sw.on?(Date.now()-sw.t0)/1000:0);
+setInterval(()=>{const c=$('#clock');if(c)c.textContent=fmt(swTime())},250);
+function runHTML(){
+  const mx=220-S.age,lo=Math.round(mx*.6),hi=Math.round(mx*.7);
+  return `<p class="mut">30-50 minuti a ritmo da conversazione. Frequenza cardiaca stimata ${lo}-${hi} bpm (60-70% di ${mx}).</p>
+  <label class="mut">Età <input id="age" type="number" min="14" max="80" value="${S.age}"></label>
+  <div class="clock" id="clock">${fmt(swTime())}</div>
+  <div class="row"><button id="go">${sw.on?'Pausa':'Avvia'}</button><button class="ghost" id="rst">Azzera</button></div>
+  <div class="row"><input id="km" inputmode="decimal" placeholder="Distanza in km" aria-label="Distanza in km"><button id="sv">Salva corsa</button></div>
+  <p class="mut" id="msg"></p>
+  <h3>Ultime corse</h3>
+  <ul>${S.runs.slice(0,5).map(r=>`<li>${r.d}: ${r.km} km in ${fmt(r.s)}, ${r.p} min/km</li>`).join('')||'<li>Nessuna corsa salvata</li>'}</ul>`;
+}
+function bindRun(){
+  $('#age').onchange=e=>{S.age=Math.min(80,Math.max(14,Number(e.target.value)||27));save();renderSession()};
+  $('#go').onclick=()=>{if(sw.on){sw.acc=swTime();sw.on=false}else{sw.t0=Date.now();sw.on=true}renderSession()};
+  $('#rst').onclick=()=>{sw={on:false,acc:0,t0:0};renderSession()};
+  $('#sv').onclick=()=>{
+    const km=parseFloat(($('#km').value||'').replace(',','.')),s=swTime();
+    if(!km||!s){$('#msg').textContent='Avvia il cronometro e inserisci la distanza per salvare.';return}
+    S.runs.unshift({d:TK,s:Math.round(s),km:km,p:fmt(s/km)});S.runs=S.runs.slice(0,30);save();
+    sw={on:false,acc:0,t0:0};renderSession();
+  };
+}
+
+/* Timer recupero: basato sull'orario di fine, così resta giusto anche se iOS sospende l'app */
+let rt=null,end=0;
+function beep(){try{const a=new (window.AudioContext||window.webkitAudioContext)(),o=a.createOscillator();o.connect(a.destination);o.frequency.value=880;o.start();setTimeout(()=>o.stop(),300)}catch(e){}try{navigator.vibrate&&navigator.vibrate(300)}catch(e){}}
+const left=()=>Math.ceil((end-Date.now())/1000);
+function tick(){const l=left();$('#rt').textContent=fmt(l);if(l<=0){stopRest();beep()}}
+function startRest(sec){end=Date.now()+sec*1000;clearInterval(rt);$('#rest').style.display='flex';tick();rt=setInterval(tick,250)}
+function stopRest(){clearInterval(rt);$('#rest').style.display='none'}
+$('#r30').onclick=()=>{end+=30000;tick()};
+$('#rstop').onclick=stopRest;
+
+function renderAll(){renderWater();renderShift();renderWeek();renderSession()}
+renderAll();
+
+/* App installata: se riapri l'app in un altro giorno, ricarica per aggiornare la data */
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){const n=new Date();if(n.toDateString()!==t.toDateString())location.reload()}});
+if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+</script>
+</body>
+</html>
